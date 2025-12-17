@@ -24,6 +24,7 @@
 #include <liboscar/Platform/MouseButton.h>
 #include <liboscar/Platform/MouseInputSource.h>
 #include <liboscar/Platform/NativeFilesystem.h>
+#include <liboscar/Platform/OverlayFilesystem.h>
 #include <liboscar/Platform/os.h>
 #include <liboscar/Platform/PhysicalKeyModifier.h>
 #include <liboscar/Platform/ResourceLoader.h>
@@ -549,11 +550,11 @@ namespace
         return resolved_resource_dir;
     }
 
-    std::filesystem::path get_current_resources_path_and_log_it(const AppSettings& settings)
+    std::vector<std::filesystem::path> get_current_resource_paths_and_log_them(const AppSettings& settings)
     {
         auto rv = get_resource_dir_from_settings(settings);
         log_info("resource directory: %s", rv.string().c_str());
-        return rv;
+        return {rv};
     }
 
     // computes the user's data directory and also logs it to the console for user-facing feedback
@@ -1600,7 +1601,7 @@ public:
 
     std::optional<std::filesystem::path> get_resource_filepath(const ResourcePath& rp) const
     {
-        return native_filesystem_->resource_filepath(rp);
+        return filesystem_->resource_filepath(rp);
     }
 
     std::string slurp_resource(const ResourcePath& rp) { return resource_loader_.slurp(rp); }
@@ -1755,14 +1756,20 @@ private:
     bool log_is_configured_ = configure_application_log(config_);
 
     // internal native filesystem (we know its implementation at compile-time)
-    std::shared_ptr<NativeFilesystem> native_filesystem_ = std::make_shared<NativeFilesystem>(
-        // initialization-time resources dir (so that it doesn't have to be fetched
-        // from the settings over-and-over)
-        get_current_resources_path_and_log_it(config_)
-    );
+    //
+    // This is initialized once, so that it doesn't have to be reconstructed
+    // over-and-over from the settings file.
+    std::shared_ptr<OverlayFilesystem> filesystem_ = [this]()
+    {
+        auto fs = std::make_shared<OverlayFilesystem>();
+        for (auto&& resource_dir_path : get_current_resource_paths_and_log_them(config_)) {
+            fs->emplace_lowest_priority<NativeFilesystem>(std::forward<decltype(resource_dir_path)>(resource_dir_path));
+        }
+        return fs;
+    }();
 
     // the type-erased `ResourceLoader` that's dished out to callers
-    ResourceLoader resource_loader_{native_filesystem_};
+    ResourceLoader resource_loader_{filesystem_};
 
     // SDL context (windowing, video driver, etc.)
     sdl::Context sdl_context_{SDL_INIT_VIDEO};

@@ -23,6 +23,7 @@
 #include <fstream>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -45,23 +46,8 @@ R"(# configuration options
 
 )";
 
-    // a value stored in the AppSettings lookup table
-    class AppSettingsLookupValue final {
-    public:
-        AppSettingsLookupValue(AppSettingScope scope, Variant value) :
-            scope_{scope},
-            value_{std::move(value)}
-        {}
-
-        AppSettingScope scope() const { return scope_; }
-        const Variant& value() const { return value_; }
-
-    private:
-        AppSettingScope scope_;
-        Variant value_;
-    };
-
-    // a lookup containing all app setting values
+    // An associative lookup that contains `AppSettingsLookupValue`s keyed
+    // by absolute paths to the value.
     class AppSettingsLookup final {
     public:
         std::optional<Variant> find_value(std::string_view key) const
@@ -98,6 +84,21 @@ R"(# configuration options
         auto begin() const { return hashmap_.begin(); }
         auto end() const { return hashmap_.end(); }
     private:
+        // The mapped type stored by this lookup.
+        class AppSettingsLookupValue final {
+        public:
+            AppSettingsLookupValue(AppSettingScope scope, Variant value) :
+                scope_{scope},
+                value_{std::move(value)}
+            {}
+
+            AppSettingScope scope() const { return scope_; }
+            const Variant& value() const { return value_; }
+
+        private:
+            AppSettingScope scope_;
+            Variant value_;
+        };
 
         using Storage = ankerl::unordered_dense::map<
             std::string,
@@ -157,7 +158,58 @@ R"(# configuration options
         catch (const std::exception& ex) {
             log_warn("error parsing %s: %s", path.string().c_str(), ex.what());
             log_warn("the application will skip loading this configuration file, but you might want to fix it");
-            return toml::table{};
+            return toml::table{};  // fallback to an empty table
+        }
+    }
+
+    std::optional<Variant> try_parse_scalar_toml_node_into_variant(const toml::node& node)
+    {
+        if (const auto* int_value = node.as_integer()) {
+            return Variant{static_cast<int>(**int_value)};  // TODO: 64-bit int support
+        }
+        if (const auto* float_value = node.as_floating_point()) {
+            return Variant{static_cast<float>(**float_value)};  // TODO: 64-bit float support
+        }
+        if (const auto* string_value = node.as_string()) {
+            return Variant{**string_value};
+        }
+        if (auto const* bool_value = node.as_boolean()) {
+            return Variant{**bool_value};
+        }
+        return std::nullopt;
+    }
+
+    std::optional<Variant> try_parse_toml_node_into_variant(const toml::node& node)
+    {
+        // Store current processing stack on the heap to eliminate any chance of
+        // stack overflow bugs when recursing through nested arrays.
+        struct ArrayIteratorPair final {
+            toml::array::const_iterator current;
+            toml::array::const_iterator end;
+        };
+        std::vector<ArrayIteratorPair> stack;
+
+        if (const auto* array_node = node.as_array()) {
+            // Node is an array: we don't allow nesting tables within arrays (it
+            // would complicate the O(1) path lookup), but arrays can be nested
+            // within arrays.
+            std::vector<Variant> entries;
+            entries.reserve(array_node->size());
+            for (const auto& entry : *array_node) {
+                if (const auto* nested_array_node = entry.as_array()) {
+                    // TODO: recursion etc.
+                }
+                if (auto parsed = try_parse_scalar_toml_node_into_variant(entry)) {
+                    entries.push_back(*std::move(parsed));
+                }
+                else {
+                    return std::nullopt;  // Disallow the entire array if any one entity is invalid.
+                }
+            }
+            return Variant{std::move(entries)};
+        }
+        else {
+            return try_parse_scalar_toml_node_into_variant(node);
         }
     }
 
@@ -185,6 +237,8 @@ R"(# configuration options
             toml::table::const_iterator iterator = table->cbegin();
         };
 
+        std::vector<std::string> errors;
+
         // crawl the table
         //
         // - every section acts as a key prefix of `$section1/$section2/$key`
@@ -203,34 +257,45 @@ R"(# configuration options
                 return rv;
             }();
 
-            auto& cur = stack.back();
             bool recursing = false;
-            for (; cur.iterator != cur.table->cend(); ++cur.iterator) {
-                const auto& [k, node] = *cur.iterator;
+            for (; stack.back().iterator != stack.back().table->cend(); ++stack.back().iterator) {
+                const auto& [k, node] = *stack.back().iterator;
 
-                if (const auto* ptr = node.as_table()) {
-                    stack.emplace_back(k, *ptr);
+                if (const auto* table_entry = node.as_table()) {
+                    // Node is a sub-table: record where it's up to on the stack
+                    // and recurse to the sub-table.
+                    ++stack.back().iterator;  // advance to next for when the stack unwinds
+                    stack.emplace_back(k, *table_entry);
                     recursing = true;
-                    ++cur.iterator;
                     break;
                 }
-                else if (const auto* int_value = node.as_integer()) {
-                    out.set_value(key_prefix + std::string{k.str()}, scope, Variant{static_cast<int>(**int_value)});  // TODO: 64-bit int support
+                else if (auto value = try_parse_toml_node_into_variant(node)) {
+                    // Node is a non-table that sucessfully parsed into a single `Variant`
+                    // that can be stored in the output.
+                    out.set_value(key_prefix + std::string{k.str()}, scope, *std::move(value));
                 }
-                else if (const auto* float_value = node.as_floating_point()) {
-                    out.set_value(key_prefix + std::string{k.str()}, scope, Variant{static_cast<float>(**float_value)});  // TODO: 64-bit float support
-                }
-                else if (const auto* string_value = node.as_string()) {
-                    out.set_value(key_prefix + std::string{k.str()}, scope, Variant{**string_value});
-                }
-                else if (auto const* bool_value = node.as_boolean()) {
-                    out.set_value(key_prefix + std::string{k.str()}, scope, Variant{**bool_value});
+                else {
+                    // Node is a non-table that didn't parse into a single `Variant`.
+                    //
+                    // We can't throw here (`AppSettings` is mission-critical for initialization)
+                    // so produce an appropriate warning instead.
+                    std::stringstream error_msg;
+                    error_msg << "    " << node.source() << ": toml entry was not understood (perhaps the wrong type?): the implementation only supports numbers, strings, and arrays";
+                    errors.push_back(std::move(error_msg).str());
                 }
             }
 
             if (not recursing) {
                 stack.pop_back();
             }
+        }
+
+        if (not errors.empty()) {
+            log_warn("Configuration file (%s) contains errors:", config_path.string().c_str());
+            for (const auto& error : errors) {
+                log_warn("%s", error.c_str());
+            }
+            log_warn("These errors were ignored in order to ensure the application can actually boot, but they should be investigated/reported");
         }
     }
 
@@ -302,6 +367,8 @@ R"(# configuration options
         }
         return *current_table;
     }
+
+    // TODO: scalars vs arrays (recursion, stack, etc.)
 
     void insert_into_toml_table(
         toml::table& table,

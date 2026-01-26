@@ -81,6 +81,7 @@ namespace osc
 
         // Re-parents the `Widget`
         void set_parent(Widget*);
+        void set_parent(Widget& widget) { set_parent(&widget); }
 
         // Returns the name of this `Widget`, or an empty string if a name has not yet been
         // set on this instance.

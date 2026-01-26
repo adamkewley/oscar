@@ -103,4 +103,7 @@ namespace
     };
 }
 
-int main(int, char**) { return App::main<OscarDemoViewer>(AppMetadata{}); }
+int main(int, char**)
+{
+    return App::main<OscarDemoViewer>(AppMetadata{});
+}

@@ -30,18 +30,34 @@ namespace
         }
 
     private:
+        bool impl_on_key_event(KeyEvent& e) final
+        {
+            if (e.type() != EventType::KeyUp) {
+                return false;
+            }
+
+            if (e.key() == Key::PageUp or e.key() == Key::PageDown) {
+                const size_t offset = e.key() == Key::PageUp ? 1 : (tab_registry_.size() - 1);
+                switch_tab((active_tab_index_ + offset) % tab_registry_.size());
+                return true;
+            }
+
+            if (e.key() == Key::F11) {
+                App::upd().make_main_window_fullscreen();
+            }
+
+            return false;
+        }
+
         bool impl_on_event(Event& e) final
         {
-            if (e.type() == EventType::KeyUp) {
-                const auto* kev = dynamic_cast<const KeyEvent*>(&e);
-                const Key key = kev->key();
-                if (key == Key::PageUp or key == Key::PageDown) {
-                    const size_t offset = kev->key() == Key::PageUp ? 1 : (tab_registry_.size() - 1);
-                    switch_tab((active_tab_index_ + offset) % tab_registry_.size());
-                    return true;
-                }
+            if (Widget::impl_on_event(e)) {
+                return true;
             }
-            return ui_context_.on_event(e) ? true : active_tab_->on_event(e);
+            if (ui_context_.on_event(e)) {
+                return true;
+            }
+            return active_tab_->on_event(e);
         }
 
         void impl_on_mount() final { active_tab_->on_mount(); }

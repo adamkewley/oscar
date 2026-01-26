@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.25)
 project(oscar VERSION 0.6.2 LANGUAGES CXX C)
 
 option(BUILD_TESTING                   "Build test suites"                                   ON)
-option(OSCAR_BUILD_DEMOS               "Build demo tabs"                                     ON)
+option(OSCAR_BUILD_DEMOS               "Build demo suite"                                    ON)
 option(OSCAR_BUILD_HELLOOSCAR          "Build hellooscar executable"                         ON)
 option(OSCAR_USE_STRICT_COMPILER_FLAGS "Add strict(er) compilation flags to oscar's targets" OFF)
 option(OSCAR_INSTALL                   "Install oscar targets (library, headers, etc.)"      ON)

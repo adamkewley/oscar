@@ -1,4 +1,4 @@
-# Oscar <img src="oscar_logo.svg" align="right" alt="OPynSim Logo" width="128" height="128" />
+# Oscar <img src="docs/oscar_logo.svg" align="right" alt="OPynSim Logo" width="128" height="128" />
 
 > A C++ framework for realtime scientific applications.
 

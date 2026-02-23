@@ -5,6 +5,9 @@ jobs:
   windows_amd64:
     name: Windows (amd64)
     runs-on: windows-2022
+    env:
+      # Filter out tests that require OpenGL 3.3 support
+      OSCAR_TEST_EXCLUDE_FILTER: "RenderQueueFixture|Graphics|MaterialTest|MeshDepthWritingMaterialFixture|MeshNormalVectorsMaterialFixture|ShaderTest|RegisteredDemoTabsTest"
     steps:
     - uses: actions/checkout@v4
 

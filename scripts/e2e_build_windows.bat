@@ -1,3 +1,6 @@
+@echo off
+setlocal enabledelayedexpansion
+
 REM set default configuration if none provided
 IF "%~1"=="" (
     set CONFIGS=Release
@@ -16,7 +19,8 @@ FOR %%C IN (%CONFIGS%) DO (
     REM build dependencies
     echo Entering third_party directory for %%C
     cd third_party
-    cmake --workflow --preset %%C || (
+    cmake --workflow --preset %%C
+    if !ERRORLEVEL! NEQ 0 (
        echo Failed to build dependencies for %%C
        exit /b !ERRORLEVEL!
     )
@@ -24,7 +28,8 @@ FOR %%C IN (%CONFIGS%) DO (
 
     REM build the project
     echo Building main project for %%C
-    cmake --workflow --preset %%C || (
+    cmake --workflow --preset %%C
+    if !ERRORLEVEL! NEQ 0 (
        echo Failed to build main project for %%C
        exit /b !ERRORLEVEL!
     )

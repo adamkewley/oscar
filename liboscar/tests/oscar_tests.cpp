@@ -6,6 +6,7 @@ int main(int argc, char** argv)
 {
 
     ::testing::InitGoogleTest(&argc, argv);
+    ::testing::GTEST_FLAG(catch_exceptions) = false;
 
     // Ensure any thrown exceptions cause the top-level process
     // to return `EXIT_FAILURE`: on Windows this isn't a guarantee O_o?

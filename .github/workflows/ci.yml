@@ -6,7 +6,8 @@ jobs:
     name: Windows (amd64)
     runs-on: windows-2022
     env:
-      # Filter out tests that require OpenGL 3.3 support
+      # Filter out tests that require OpenGL 3.3 support (GitHub Windows
+      # runner doesn't support it).
       OSCAR_TEST_EXCLUDE_FILTER: "RenderQueueFixture|Graphics|MaterialTest|MeshDepthWritingMaterialFixture|MeshNormalVectorsMaterialFixture|ShaderTest|RegisteredDemoTabsTest"
     steps:
     - uses: actions/checkout@v4
@@ -32,6 +33,7 @@ jobs:
     name: MacOS (universal?)
     runs-on: macos-14
     env:
+        # GitHub macOS runner can get jammed up if running multithreaded
         CTEST_PARALLEL_LEVEL: 1
     steps:
     - uses: actions/checkout@v4

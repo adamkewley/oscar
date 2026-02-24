@@ -19,5 +19,8 @@ docker container prune
 cd docker && docker build -t oscar-ubuntu22 -f ubuntu22-ci.Dockerfile . && cd -
 
 # Build project via the environment
-docker run --rm -v "${PWD}:/project" -w /project oscar-ubuntu22 ./scripts/e2e_build_ubuntu22.sh Development
+# --init is necessary to prevent the bash script from being PID=1, which can
+#        make xvfb-run hang
+BUILD_TYPE=Release
+docker run --init --rm -v "${PWD}:/project" -w /project oscar-ubuntu22 bash -c "cd third_party && cmake --workflow --preset ${BUILD_TYPE} && cd .. && xvfb-run cmake --workflow --preset ${BUILD_TYPE}"
 ```

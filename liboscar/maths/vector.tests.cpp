@@ -218,3 +218,145 @@ TEST(Vector, can_be_written_to_a_std_ostream)
     ss << Vector3i{-5, 0, 9};
     ASSERT_EQ(ss.str(), "Vector3(-5, 0, 9)");
 }
+
+TEST(Vector, x_returns_first_element_as_const_reference)
+{
+    const Vector3d v{1.0, 2.0, 3.0};
+    const double& x = v.x();
+    ASSERT_EQ(x, 1.0);
+}
+
+TEST(Vector, x_is_constexpr)
+{
+    static_assert(Vector3d{1.0, 2.0, 3.0}.x() == 1.0);
+}
+
+TEST(Vector, x_can_return_mutable_reference)
+{
+    Vector3d v{1.0, 2.0, 3.0};
+    v.x() += 3.0;
+    ASSERT_EQ(v.x(), 1.0+3.0);
+}
+
+TEST(Vector, y_returns_second_element_as_const_reference)
+{
+    const Vector3d v{1.0, 2.0, 3.0};
+    const double& y = v.y();
+    ASSERT_EQ(y, 2.0);
+}
+
+TEST(Vector, y_is_constexpr)
+{
+    static_assert(Vector3d{1.0, 2.0, 3.0}.y() == 2.0);
+}
+
+TEST(Vector, y_can_return_mutable_reference)
+{
+    Vector3d v{1.0, 2.0, 3.0};
+    v.y() += 3.0;
+    ASSERT_EQ(v.y(), 2.0+3.0);
+}
+
+TEST(Vector, z_returns_third_element_as_const_reference)
+{
+    const Vector3d v{1.0, 2.0, 3.0};
+    const double& z = v.z();
+    ASSERT_EQ(z, 3.0);
+}
+
+TEST(Vector, z_is_constexpr)
+{
+    static_assert(Vector3d{1.0, 2.0, 3.0}.z() == 3.0);
+}
+
+TEST(Vector, z_can_return_mutable_reference)
+{
+    Vector3d v{1.0, 2.0, 3.0};
+    v.z() += 3.0;
+    ASSERT_EQ(v.z(), 3.0+3.0);
+}
+
+TEST(Vector, w_returns_fourth_element_as_const_reference)
+{
+    const Vector4d v{1.0, 2.0, 3.0, 4.0};
+    const double& w = v.w();
+    ASSERT_EQ(w, 4.0);
+}
+
+TEST(Vector, w_is_constexpr)
+{
+    static_assert(Vector4d{1.0, 2.0, 3.0, 4.0}.w() == 4.0);
+}
+
+TEST(Vector, w_can_return_mutable_reference)
+{
+    Vector4d v{1.0, 2.0, 3.0, 4.0};
+    v.w() += 3.0;
+    ASSERT_EQ(v.w(), 4.0+3.0);
+}
+
+TEST(Vector, xy_returns_expected_elements)
+{
+    Vector3i v{5, 6, 7};
+    ASSERT_EQ(v.xy(), Vector2i(5, 6));
+}
+
+TEST(Vector, xy_is_constexpr)
+{
+    static_assert(Vector3i{5, 6, 7}.xy() == Vector2i{5, 6});
+}
+
+TEST(Vector, xz_returns_expected_elements)
+{
+    Vector3i v{5, 6, 7};
+    ASSERT_EQ(v.xz(), Vector2i(5, 7));
+}
+
+TEST(Vector, xz_is_constexpr)
+{
+    static_assert(Vector3i{5, 6, 7}.xz() == Vector2i{5, 7});
+}
+
+TEST(Vector, yx_returns_expected_elements)
+{
+    Vector3i v{5, 6, 7};
+    ASSERT_EQ(v.yx(), Vector2i(6, 5));
+}
+
+TEST(Vector, yx_is_constexpr)
+{
+    static_assert(Vector3i{5, 6, 7}.yx() == Vector2i{6, 5});
+}
+
+TEST(Vector, yz_returns_expected_elements)
+{
+    Vector3i v{5, 6, 7};
+    ASSERT_EQ(v.yz(), Vector2i(6, 7));
+}
+
+TEST(Vector, yz_is_constexpr)
+{
+    static_assert(Vector3i{5, 6, 7}.yz() == Vector2i{6, 7});
+}
+
+TEST(Vector, zx_returns_expected_elements)
+{
+    Vector3i v{5, 6, 7};
+    ASSERT_EQ(v.zx(), Vector2i(7, 5));
+}
+
+TEST(Vector, zx_is_constexpr)
+{
+    static_assert(Vector3i{5, 6, 7}.zx() == Vector2i{7, 5});
+}
+
+TEST(Vector, zy_returns_expected_elements)
+{
+    Vector3i v{5, 6, 7};
+    ASSERT_EQ(v.zy(), Vector2i(7, 6));
+}
+
+TEST(Vector, zy_is_constexpr)
+{
+    static_assert(Vector3i{5, 6, 7}.zy() == Vector2i{7, 6});
+}

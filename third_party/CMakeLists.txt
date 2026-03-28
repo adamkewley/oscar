@@ -4,6 +4,7 @@ project(oscar-dependencies LANGUAGES CXX C)
 include(ExternalProject)  # ExternalProject_Add
 include(GNUInstallDirs)   # CMAKE_INSTALL_LIBDIR
 
+option(OSCARDEPS_BUILD_CGLTF           "Build cgltf"           ON)
 option(OSCARDEPS_BUILD_GLAD            "Build glad"            ON)
 option(OSCARDEPS_BUILD_GOOGLETEST      "Build googletest"      ON)
 option(OSCARDEPS_BUILD_IMGUI           "Build imgui"           ON)
@@ -81,6 +82,16 @@ if(TRUE)
         endif()
     endforeach()
     unset(_oscardeps_forwarded_vars)
+endif()
+
+if(OSCARDEPS_BUILD_CGLTF)
+    ExternalProject_Add(cgltf
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cgltf
+        SOURCE_SUBDIR ../cmake/cgltf
+        BUILD_ALWAYS ${OSCARDEPS_BUILD_ALWAYS}
+        CMAKE_CACHE_ARGS
+            ${_oscardeps_dependency_cmake_args}
+    )
 endif()
 
 if(OSCARDEPS_BUILD_GLAD)

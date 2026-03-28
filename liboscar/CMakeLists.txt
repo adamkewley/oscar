@@ -11,6 +11,7 @@ if (NOT OSCAR_EMSCRIPTEN)
     find_package(glad REQUIRED CONFIG)
     find_package(SDL3 REQUIRED CONFIG)
 endif()
+find_package(cgltf REQUIRED CONFIG)
 find_package(imgui REQUIRED CONFIG)
 find_package(implot REQUIRED CONFIG)
 find_package(tomlplusplus REQUIRED CONFIG)
@@ -68,6 +69,7 @@ PRIVATE
     $<$<NOT:$<BOOL:${OSCAR_EMSCRIPTEN}>>:glad>
     $<$<NOT:$<BOOL:${OSCAR_EMSCRIPTEN}>>:SDL3::SDL3>
 
+    cgltf
     unordered_dense::unordered_dense
     tomlplusplus::tomlplusplus
     imgui

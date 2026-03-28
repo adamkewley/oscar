@@ -30,6 +30,7 @@
 
 #include <liboscar-demos/custom_widgets_tab.h>
 #include <liboscar-demos/drawing_test_tab.h>
+#include <liboscar-demos/gltf_demo.h>
 #include <liboscar-demos/frustum_culling_tab.h>
 #include <liboscar-demos/hittest_tab.h>
 #include <liboscar-demos/im_gui_demo_tab.h>
@@ -79,6 +80,7 @@ namespace osc
 
         CustomWidgetsTab,
         DrawingTestTab,
+        GLTFDemo,
         FrustumCullingTab,
         HittestTab,
         ImGuiDemoTab,

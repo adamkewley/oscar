@@ -7,6 +7,13 @@ below. All third-party code uses some kind of permissive license, and
 is either used as a library (i.e. unmodified, linked), or as a source
 code fork (i.e. copied + pasted, then subsequently modified in-tree).
 
+cgltf
+-----
+
+- https://github.com/jkuhlmann/cgltf
+- Licensed under the MIT License
+- Copyright (c) 2021 Johannes Kuhlmann
+
 glad
 ----
 

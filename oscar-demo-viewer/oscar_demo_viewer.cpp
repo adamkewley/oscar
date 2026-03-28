@@ -146,7 +146,16 @@ namespace
 
         std::vector<NamedWidget> demos_ = all_demos();
         ui::Context ui_context_{App::upd()};
-        size_t active_demo_index_ = 0;
+        std::optional<std::string> first_demo_shown_;  // Customize this if working on a demo
+        size_t active_demo_index_ = [this]() -> size_t
+        {
+            if (first_demo_shown_) {
+                if (auto it = rgs::find(demos_, *first_demo_shown_, &NamedWidget::name); it != demos_.end()) {
+                    return std::distance(demos_.begin(), it);
+                }
+            }
+            return 0;
+        }();
         std::unique_ptr<Widget> active_demo_;
     };
 }
